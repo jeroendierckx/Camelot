@@ -109,9 +109,12 @@ class OpenFormView(AbstractCrudView):
         model_context.selection_count = 1
 
     def _minimum_columns(self, admin, fa):
-        # Make rich text fields span 4 columns minimum
+        # Make rich text fields span 3 columns minimum,
+        # not to wide to avoid overlap with pdf preview,
+        # but more or less wide enough for the toolbar
+        # buttons
         if fa.get('delegate', None) == RichTextDelegate:
-           return 4
+           return 3
         # Use # of columns for One2Many fields
         target = fa.get('target', None)
         if target is not None:
@@ -119,7 +122,10 @@ class OpenFormView(AbstractCrudView):
             direction = fa.get('direction', 'onetomany')
             python_type = fa.get('python_type')
             if direction.endswith('many') and python_type == list and related_admin:
-                return len(related_admin.get_columns())
+                num_columns = 0
+                for field_name in related_admin.get_columns():
+                    num_columns += related_admin.get_field_attributes(field_name).get('column_span', 1)
+                return num_columns
 
     @staticmethod
     def _add_actions(admin, actions):
